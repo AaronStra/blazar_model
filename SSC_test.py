@@ -12,11 +12,11 @@ from ssc_model import model, numerics
 import astropy.units as u
 import timeit
 
-time_grid = dict(time_min = 0., time_max = 3., time_bins = 50)
-gamma_grid = dict(gamma_min = 2., gamma_max = 2e5, gamma_bins = 20)
-emission_region = dict(R = 1e16, B = 1., t_esc = 1.5)
-injected_spectrum = dict(norm = 1e-3, alpha = -2., t_inj = 1.5)
-dist = 2*u.Mpc
+time_grid = dict(time_min = 0., time_max = 3., time_bins = 80)
+gamma_grid = dict(gamma_min = 6e-3, gamma_max = 3.9e6, gamma_bins = 30)
+emission_region = dict(R = 5.8e15, B = 0.04, t_esc = 1.5, delta = 20)
+injected_spectrum = dict(norm = 2.2e-1, alpha = -2, t_inj = 3.)
+dist = 207.8*u.Mpc
 
 start = timeit.default_timer()
 
@@ -55,11 +55,22 @@ axes[0].set_yscale('log')
 
 energy = np.logspace(-7, 15, 100) * u.eV
 axes[1].plot(energy, SYN.sed(energy, dist) + IC.sed(energy,dist), lw=3, color='royalblue', label='Synchrotron + Inverse Compton')
+axes[1].plot(energy * SSC.delta, SYN.sed(energy, dist) * SSC.delta**3 + IC.sed(energy,dist) * SSC.delta**3, ls = '--', lw=1.5, color='royalblue', label='boosted')
+axes[1].legend(loc = 0, numpoints = 1., prop = {'size':8.})
 axes[1].set_xlabel(r'$E\,[eV]$')
 axes[1].set_ylabel(r'$E^{2} \times {\rm d}F/{\rm d}E\,[erg\,cm^{-2}\,s^{-1}]$')
-axes[1].set_ylim(1e-25, 1e-12)
+axes[1].set_ylim(1e-25, 1e-5)
 axes[1].set_xscale('log')
 axes[1].set_yscale('log')
 
-fig.savefig('SSC_test_output.png')
+# extra plot for boosted spectrum
+#axes[2].plot(energy * SSC.delta, SYN.sed(energy, dist) * SSC.delta**3 + IC.sed(energy,dist) * SSC.delta**3, lw=3, color='royalblue', label='Synchrotron + Inverse Compton')
+#axes[2].set_xlabel(r'$E\,[eV]$')
+#axes[2].set_ylabel(r'$E^{2} \times {\rm d}F/{\rm d}E\,[erg\,cm^{-2}\,s^{-1}]$')
+#axes[2].set_ylim(1e-18, 1e-5)
+#axes[2].set_xscale('log')
+#axes[2].set_yscale('log')
+
+
+fig.savefig('SSC_test_output_Doppler.png')
 plt.show()

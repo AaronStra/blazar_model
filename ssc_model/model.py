@@ -17,7 +17,7 @@ class model:
         initializing the time grid
         * gamma_grid = dict(minimum, maximum Lorentz factor, binning)
         initializing the Lorentz factor grid
-        * emission_region dict(radius, magnetic field, escaping time)
+        * emission_region dict(radius, magnetic field, escaping time, Doppler-Factor)
         with parameters describing the emission region, escaping time in order of R/c
         * injected_spectrum dict(norm, index)
         initializing the injected spectrum (a powerlaw for now).
@@ -29,6 +29,7 @@ class model:
         self.B = emission_region['B'] # in Gauss
         self.U_B = self.B/(8.*pi) # magnetic field density
         self.t_esc = emission_region['t_esc']*self.crossing_time
+	self.delta = emission_region['delta'] 	
 
         # time grid attributes definition
         self.time_min = time_grid['time_min']*self.crossing_time
