@@ -2,6 +2,7 @@ from __future__ import division
 from math import pi
 import numpy as np
 from constants import *
+import astropy.units as u
 
 class model:
     '''
@@ -29,7 +30,11 @@ class model:
         self.B = emission_region['B'] # in Gauss
         self.U_B = self.B/(8.*pi) # magnetic field density
         self.t_esc = emission_region['t_esc']*self.crossing_time
-	self.delta = emission_region['delta'] 	
+        self.gamma = emission_region['gamma']
+        self.beta = np.sqrt(1-1/self.gamma**2)
+        self.theta = emission_region['theta']
+        self.z = emission_region['z']
+        self.distance = self.z*c/H*u.Mpc # in Mpc
 
         # time grid attributes definition
         self.time_min = time_grid['time_min']*self.crossing_time

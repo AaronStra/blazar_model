@@ -13,3 +13,6 @@ e = const.e.esu.value
 h = const.h.to('erg*s').value
 # critical magnetic field for the analytical solution
 B_c = 4.414*1e13 # in Gauss
+
+H = 67.8*1e5
+

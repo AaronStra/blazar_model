@@ -12,17 +12,18 @@ from ssc_model import model, numerics
 import astropy.units as u
 import timeit
 
-time_grid = dict(time_min = 0., time_max = 3., time_bins = 80)
+time_grid = dict(time_min = 0., time_max = 3., time_bins = 200)
 gamma_grid = dict(gamma_min = 6e-3, gamma_max = 3.9e6, gamma_bins = 30)
-emission_region = dict(R = 5.8e15, B = 0.04, t_esc = 1.5, delta = 20)
+emission_region = dict(R = 5.8e15, B = 0.04, t_esc = 1.5, gamma = 130, theta = 0, z = 2)
 injected_spectrum = dict(norm = 2.2e-1, alpha = -2, t_inj = 3.)
-dist = 207.8*u.Mpc
 
 start = timeit.default_timer()
 
 # let us initialize the ssc object
 SSC = model(time_grid, gamma_grid, emission_region, injected_spectrum)
+dist = SSC.distance
 num = numerics(SSC)
+
 
 # let us evolve it
 N_e = num.evolve()
@@ -31,6 +32,12 @@ N_e = num.evolve()
 # fetch the naima inverse compton and synchrotron object
 SYN = num.synchrotron(N_e)
 IC = num.inverse_compton(N_e)
+
+energy = np.logspace(-7, 13, 200) * u.eV
+SED = SYN.sed(energy, dist)+IC.sed(energy, dist)
+
+boosted_energy, boosted_SED = num.doppler(energy, SED)
+final_SED = num.ebl(boosted_energy, boosted_SED)
 
 stop = timeit.default_timer()
 print 'Computational time: '
@@ -53,9 +60,11 @@ axes[0].set_ylabel(r'$\gamma^2 \times n_{e}$')
 axes[0].set_yscale('log')
 
 
-energy = np.logspace(-7, 15, 100) * u.eV
-axes[1].plot(energy, SYN.sed(energy, dist) + IC.sed(energy,dist), lw=3, color='royalblue', label='Synchrotron + Inverse Compton')
-axes[1].plot(energy * SSC.delta, SYN.sed(energy, dist) * SSC.delta**3 + IC.sed(energy,dist) * SSC.delta**3, ls = '--', lw=1.5, color='royalblue', label='boosted')
+
+
+axes[1].plot(energy, SED, lw=3, color='royalblue', label='Synchrotron + Inverse Compton')
+axes[1].plot(boosted_energy, boosted_SED, lw=3, color='red', label='boosted SED')
+axes[1].plot(boosted_energy, final_SED, lw=3, color='green', label='observers SED')
 axes[1].legend(loc = 0, numpoints = 1., prop = {'size':8.})
 axes[1].set_xlabel(r'$E\,[eV]$')
 axes[1].set_ylabel(r'$E^{2} \times {\rm d}F/{\rm d}E\,[erg\,cm^{-2}\,s^{-1}]$')

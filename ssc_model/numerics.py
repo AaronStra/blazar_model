@@ -97,6 +97,33 @@ class numerics:
 
         return IC
 
+    def doppler(self, energy, SED):
+        '''
+        Calculating Doppler boosting based on the intrinsic emission
+        and the model parameters.
+        '''
+        beta = self.model.beta
+        theta = self.model.theta
+
+        doppler_factor = np.sqrt(1-beta**2)/(1-beta*np.cos(theta))
+        boosted_SED = doppler_factor**3*SED
+        boosted_energy = doppler_factor*energy
+
+
+        return boosted_energy, boosted_SED
+
+
+    def ebl(self, boosted_energy, boosted_SED):
+        '''
+        Adding absorption due to extra galactic background light with the naima model
+        '''
+        ebl_model = naima.models.EblAbsorptionModel(self.model.z, ebl_absorption_model='Dominguez')
+        transmissivity  = ebl_model.transmission(boosted_energy)
+
+        final_SED = boosted_SED*transmissivity
+
+        return final_SED
+
 
     def evolve(self):
         '''
