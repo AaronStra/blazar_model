@@ -502,7 +502,7 @@ class EblAbsorptionModel(TableModel):
         for i in range(0, len(e)):
             if e[i].to('GeV').value < 1.:
                 taus[i] = 0.
-            elif e[i].to('TeV').value > 500.:
+            elif e[i].to('TeV').value > 1000.:
                 taus[i] = np.log10(6000.)
             else:
                 taus[i] = np.log10(self(e[i]))
