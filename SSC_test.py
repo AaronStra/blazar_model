@@ -12,10 +12,10 @@ from ssc_model import model, numerics
 import astropy.units as u
 import timeit
 
-time_grid = dict(time_min = 0., time_max = 0.2, time_bins = 200)
-gamma_grid = dict(gamma_min = 1e2, gamma_max = 1e5, gamma_bins = 30)
-emission_region = dict(R = 1e16, B = 1, t_esc = 1.5, gamma = 100, theta = 0, z = 1)
-injected_spectrum = dict(norm = 2.2e-1, alpha = -2, t_inj = 0.1)
+time_grid = dict(time_min = 0., time_max = 10., time_bins = 200)
+gamma_grid = dict(gamma_min = 6e-3, gamma_max = 3.9e6, gamma_bins = 30)
+emission_region = dict(R = 5.8e15, B = 0.04, t_esc = 1.5, gamma = 100, theta = 0, z = 1)
+injected_spectrum = dict(norm = 2.2e-1, alpha = -2, t_inj = 5.)
 
 start = timeit.default_timer()
 
@@ -49,24 +49,17 @@ fig.subplots_adjust(hspace = 0.4)
 font = {'family': 'serif',  'color':'black', 'weight': 'normal', 'size': 16.} # font definitions
 
 # first plot with electron spectrum
-#axes[0].plot(SSC.gamma_grid, SSC.gamma_grid**2*SSC.N_e_inj,  ls = '--', lw=2, marker = '',
-#            color = 'turquoise', label = 'Injected Spectrum')
-#axes[0].plot(SSC.gamma_grid, SSC.gamma_grid**2*N_e,  ls = '-', lw=2, marker = '',
-#            color = 'crimson', label = 'numerical solution')
-#axes[0].legend(loc = 0, numpoints = 1., prop = {'size':12.})
-#axes[0].set_xscale('log')
-#axes[0].set_xlabel(r'$\gamma$')
-#axes[0].set_ylabel(r'$\gamma^2 \times n_{e}$')
-#axes[0].set_yscale('log')
-
-# electron spectrum
-axes[0].plot(SSC.gamma_grid, N_e,  ls = '-', lw=2, marker = '',
+axes[0].plot(SSC.gamma_grid, SSC.gamma_grid**2*SSC.N_e_inj,  ls = '--', lw=2, marker = '',
+            color = 'turquoise', label = 'Injected Spectrum')
+axes[0].plot(SSC.gamma_grid, SSC.gamma_grid**2*N_e,  ls = '-', lw=2, marker = '',
             color = 'crimson', label = 'numerical solution')
 axes[0].legend(loc = 0, numpoints = 1., prop = {'size':12.})
 axes[0].set_xscale('log')
 axes[0].set_xlabel(r'$\gamma$')
 axes[0].set_ylabel(r'$\gamma^2 \times n_{e}$')
 axes[0].set_yscale('log')
+
+
 
 
 axes[1].plot(energy, SED, lw=3, color='royalblue', label='Synchrotron + Inverse Compton')
@@ -79,7 +72,7 @@ axes[1].set_ylim(1e-25, 1e-5)
 axes[1].set_xscale('log')
 axes[1].set_yscale('log')
 
-# final SED
+
 axes[2].plot(boosted_energy, final_SED, lw=3, color='green', label='observers SED')
 axes[2].legend(loc = 0, numpoints = 1., prop = {'size':8.})
 axes[2].set_xlabel(r'$E\,[eV]$')

@@ -112,3 +112,15 @@ class model:
         will initialize an array for power-law injection
         '''
         return self.N_e_inj
+
+    @property
+    def gaussian_injection(self):
+        '''
+        will initialize an array for gaussian injection
+        '''
+        mu = 1e3
+        sigma = mu/10
+        l = 1e-3
+        A = l*self.R*m_e*c**3/(np.sqrt(2*pi)*sigma*sigma_T)/10**10
+
+        return np.array([A*np.exp(-(gamma-mu)**2/(2*sigma**2)) for gamma in self.gamma_grid])
