@@ -12,9 +12,9 @@ from ssc_model import model, numerics
 import astropy.units as u
 import timeit
 
-time_grid = dict(time_min = 0., time_max = 3., time_bins = 200)
+time_grid = dict(time_min = 0., time_max = 5., time_bins = 200)
 gamma_grid = dict(gamma_min = 6e-3, gamma_max = 3.9e6, gamma_bins = 30)
-emission_region = dict(R = 5.8e15, B = 0.04, t_esc = 1.5, gamma = 130, theta = 0, z = 2)
+emission_region = dict(R = 5.8e15, B = 0.04, t_esc = 1.5, gamma = 100, theta = 0, z = 2)
 injected_spectrum = dict(norm = 2.2e-1, alpha = -2, t_inj = 3.)
 
 start = timeit.default_timer()

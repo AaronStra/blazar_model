@@ -481,9 +481,31 @@ class EblAbsorptionModel(TableModel):
             redshift_list = np.arange(0.01, 4, 0.01)
             energy = taus_table['energy'] * u.TeV
             if self.redshift >= 0.01:
-                colname = 'col%s' % (
-                    2 + (np.abs(redshift_list - self.redshift)).argmin())
-                table_values = taus_table[colname]
+                # Redshift intervall for interpolation:
+
+                redshift_arg1 = (np.abs(redshift_list - self.redshift)).argmin()
+
+                if redshift_list[redshift_arg1] <= self.redshift:
+                        redshift_arg2 = redshift_arg1 + 1
+                else:
+                        redshift_arg2 = redshift_arg1
+                        redshift_arg1 = redshift_arg1 - 1
+
+
+                colname1 = 'col%s' % (
+                    2 + redshift_arg1)
+
+                colname2 = 'col%s' % (
+                    2 + redshift_arg2)
+
+                table_values1 = taus_table[colname1]
+                table_values2 = taus_table[colname2]
+
+                # Linear interpolation
+                factor = (self.redshift-redshift_list[redshift_arg1])/(redshift_list[redshift_arg2]-redshift_list[redshift_arg1])
+
+                table_values = table_values1*(1-factor)+table_values2*factor
+
                 # Set maximum value of the log(Tau) to 150, as it is high
                 # enough.  This solves later overflow problems.
                 table_values[table_values > 150.] = 150.
