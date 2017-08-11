@@ -105,7 +105,7 @@ class numerics:
         beta = self.model.beta
         theta = self.model.theta
 
-        doppler_factor = np.sqrt(1-beta**2)/(1-beta*np.cos(theta))
+        doppler_factor = np.sqrt(1-beta**2)/(1-beta*np.cos(theta/180*pi))
         boosted_SED = doppler_factor**3*SED
         boosted_energy = doppler_factor*energy
 
@@ -133,6 +133,7 @@ class numerics:
         Options only_synchrotron_cooling is for test
         '''
         # injected spectrum
+
         N_e = self.model.N_e_inj
         # injecton term, to be added each delta_t up to the maximum injection time
         # specified by model.inj_time
@@ -145,7 +146,6 @@ class numerics:
         for time in self.model.time_grid:
             # here N^{i+1} of Reference --> N_e_tmp
             # here N^{i} of Reference --> N_e
-
             # solve the system with Eq.(11):
             if time_past_injection <= self.model.inj_time:
                 N_e_tmp = np.linalg.solve(self.ChaCoo_tridiag_matrix(), N_e + Q_e*delta_t)
