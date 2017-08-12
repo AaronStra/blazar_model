@@ -13,11 +13,15 @@ import astropy.units as u
 import timeit
 
 Times = [0.02, 0.05, 0.07, 0.2, 0.5, 2, 4, 6, 8, 10]
-i = 0
+
+fig, axes = plt.subplots(2, 1)
+fig.subplots_adjust(hspace = 0.4)
+font = {'family': 'serif',  'color':'black', 'weight': 'normal', 'size': 16.} # font definitions
+
 for time in Times:
 
     time_grid = dict(time_min = 0., time_max = time, time_bins = 100)
-    gamma_grid = dict(gamma_min = 1e-2, gamma_max = 1e6, gamma_bins = 1000)
+    gamma_grid = dict(gamma_min = 1e-2, gamma_max = 1e6, gamma_bins = 100)
     emission_region = dict(R = 1e16, B = 1, t_esc = 1.5, gamma = 100, theta = 0, z = 1)
     injected_spectrum = dict(norm = 9e-9, alpha = -2, t_inj = 0.1)
 
@@ -48,13 +52,11 @@ for time in Times:
     print stop - start, ' s'
 
     # plotting section
-    fig, axes = plt.subplots(2, 1)
-    fig.subplots_adjust(hspace = 0.4)
-    font = {'family': 'serif',  'color':'black', 'weight': 'normal', 'size': 16.} # font definitions
+
 
     # first plot with electron spectrum
     axes[0].plot(SSC.gamma_grid, N_e,  ls = '-', lw=1, marker = '',
-              color = 'black', label = 'numerical solution')
+              color = 'black')
     axes[0].legend(loc = 0, numpoints = 1., prop = {'size':12.})
     axes[0].set_xscale('log')
     axes[0].set_xlabel(r'$\gamma$')
@@ -62,6 +64,7 @@ for time in Times:
     axes[0].set_xlim(1e2, 2e5)
     axes[0].set_ylim(1e-8, 1e-4)
     axes[0].set_yscale('log')
+    axes[0].annotate('%f.2' % time, xy=(np.argmax(N_e), max(N_e)), xytext=(np.argmax(N_e), max(N_e)*1e2), arrowprops = dict(facecolor = 'black', shrink = 0.01))
 
 
 
@@ -77,7 +80,7 @@ for time in Times:
     #axes[1].set_yscale('log')
 
 
-    axes[1].plot(boosted_energy, final_SED, lw=3, color='green', label='observers SED')
+    axes[1].plot(boosted_energy, final_SED, lw=2, color='green')
     axes[1].legend(loc = 0, numpoints = 1., prop = {'size':8.})
     axes[1].set_xlabel(r'$E\,[eV]$')
     axes[1].set_ylabel(r'$E^{2} \times {\rm d}F/{\rm d}E\,[erg\,cm^{-2}\,s^{-1}]$')
@@ -85,7 +88,9 @@ for time in Times:
     axes[1].set_xscale('log')
     axes[1].set_yscale('log')
     axes[1].set_xlim(1e-3, 1e13)
-    axes[1].set_ylim(1e-25, 1e-5)
+    axes[1].set_ylim(1e-35, 1e-2)
+    axes[1].annotate('%f.2' % time, xy=(np.argmax(N_e), max(N_e)), xytext=(np.argmax(N_e), max(N_e) * 1e7),
+                     arrowprops=dict(facecolor='black', shrink=0.01))
 
 
 fig.savefig('SSC_test_output_final.png')
