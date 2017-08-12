@@ -123,6 +123,6 @@ class model:
         sigma = mu/1000
         l = 1e-3
         A = l*self.R*m_e*c**3/(np.sqrt(2*pi)*sigma*sigma_T)
-        A=9e-9
+        A = self.inj_spectr_norm
 
         return np.array([A*np.exp(-(gamma-mu)**2/(2*sigma**2)) for gamma in self.gamma_grid])

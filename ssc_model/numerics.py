@@ -134,7 +134,7 @@ class numerics:
         '''
         # injected spectrum
 
-        N_e = 0.
+        N_e = self.model.gaussian_injection
         # injecton term, to be added each delta_t up to the maximum injection time
         # specified by model.inj_time
         Q_e = self.model.gaussian_injection
