@@ -104,7 +104,7 @@ class model:
         '''
         will initialize an array for costant injection
         '''
-        return np.array([self.inj_spectr_norm for gamma in self.gamma_grid])
+        return np.array([self.inj_spectr_norm/1e5 for gamma in self.gamma_grid])
 
     @property
     def powerlaw_injection(self):
