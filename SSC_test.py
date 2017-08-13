@@ -12,7 +12,7 @@ from ssc_model import model, numerics
 import astropy.units as u
 import timeit
 
-Times = [0.02, 0.05, 0.07, 0.2, 0.5, 2, 4, 6, 8, 10]
+Times = [0.02]#, 0.05, 0.07, 0.2, 0.5, 2, 4, 6, 8, 10]
 
 fig, axes = plt.subplots(2, 1)
 fig.subplots_adjust(hspace = 0.4)
@@ -21,7 +21,7 @@ font = {'family': 'serif',  'color':'black', 'weight': 'normal', 'size': 16.} # 
 for time in Times:
 
     time_grid = dict(time_min = 0., time_max = time, time_bins = 100)
-    gamma_grid = dict(gamma_min = 1e-2, gamma_max = 1e6, gamma_bins = 100)
+    gamma_grid = dict(gamma_min = 1e-2, gamma_max = 1e6, gamma_bins = 1000)
     emission_region = dict(R = 1e16, B = 1, t_esc = 1.5, gamma = 100, theta = 0, z = 1)
     injected_spectrum = dict(norm = 9e-9, alpha = -2, t_inj = 0.1)
 
@@ -64,7 +64,8 @@ for time in Times:
     axes[0].set_xlim(1e2, 2e5)
     axes[0].set_ylim(1e-8, 1e-4)
     axes[0].set_yscale('log')
-    axes[0].annotate('%f.2' % time, xy=(np.argmax(N_e), max(N_e)), xytext=(np.argmax(N_e), max(N_e)*1e2), arrowprops = dict(facecolor = 'black', shrink = 0.01))
+    axes[0].annotate('%.2f' % time, xy=(SSC.gamma_grid[np.argmax(N_e)], max(N_e)), xytext=(SSC.gamma_grid[np.argmax(N_e)], max(N_e)*1e2),
+                     arrowprops = dict(arrowstyle = '->'))
 
 
 
@@ -89,8 +90,8 @@ for time in Times:
     axes[1].set_yscale('log')
     axes[1].set_xlim(1e-3, 1e13)
     axes[1].set_ylim(1e-35, 1e-2)
-    axes[1].annotate('%f.2' % time, xy=(np.argmax(N_e), max(N_e)), xytext=(np.argmax(N_e), max(N_e) * 1e7),
-                     arrowprops=dict(facecolor='black', shrink=0.01))
+    axes[1].annotate('%.2f' % time, xy=(np.argmax(final_SED), max(final_SED).value), xytext=(np.argmax(final_SED), max(final_SED).value*1e7),
+                     arrowprops=dict(arrowstyle = '->'))
 
 
 fig.savefig('SSC_test_output_final.png')
