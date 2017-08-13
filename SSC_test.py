@@ -12,9 +12,10 @@ from ssc_model import model, numerics
 import astropy.units as u
 import timeit
 
-Times = [0.02]#, 0.05, 0.07, 0.2, 0.5, 2, 4, 6, 8, 10]
+Times = [0.2]#[0.02, 0.05, 0.07]#, 0.2, 0.5, 2, 4, 6, 8, 10]
+k = 0
 
-fig, axes = plt.subplots(2, 1)
+fig, axes = plt.subplots(1, 1)
 fig.subplots_adjust(hspace = 0.4)
 font = {'family': 'serif',  'color':'black', 'weight': 'normal', 'size': 16.} # font definitions
 
@@ -36,12 +37,13 @@ for time in Times:
     # let us evolve it
     N_e = num.evolve()
 
+
     # calculate the SED
     # fetch the naima inverse compton and synchrotron object
     SYN = num.synchrotron(N_e)
     IC = num.inverse_compton(N_e)
 
-    energy = np.logspace(-7, 13, 200) * u.eV
+    energy = np.logspace(-10, 12, 200) * u.eV
     SED = SYN.sed(energy, dist)+IC.sed(energy, dist)
 
     boosted_energy, boosted_SED = num.doppler(energy, SED)
@@ -55,17 +57,17 @@ for time in Times:
 
 
     # first plot with electron spectrum
-    axes[0].plot(SSC.gamma_grid, N_e,  ls = '-', lw=1, marker = '',
-              color = 'black')
-    axes[0].legend(loc = 0, numpoints = 1., prop = {'size':12.})
-    axes[0].set_xscale('log')
-    axes[0].set_xlabel(r'$\gamma$')
-    axes[0].set_ylabel(r'$n_{e}$')
-    axes[0].set_xlim(1e2, 2e5)
-    axes[0].set_ylim(1e-8, 1e-4)
-    axes[0].set_yscale('log')
-    axes[0].annotate('%.2f' % time, xy=(SSC.gamma_grid[np.argmax(N_e)], max(N_e)), xytext=(SSC.gamma_grid[np.argmax(N_e)], max(N_e)*1e2),
-                     arrowprops = dict(arrowstyle = '->'))
+    #axes[0].plot(SSC.gamma_grid, N_e,  ls = '-', lw=1, marker = '',
+    #          color = 'black')
+    #axes[0].legend(loc = 0, numpoints = 1., prop = {'size':12.})
+    #axes[0].set_xscale('log')
+    #axes[0].set_xlabel(r'$\gamma$')
+    #axes[0].set_ylabel(r'$n_{e}$')
+    #axes[0].set_xlim(1e2, 2e5)
+    #axes[0].set_ylim(1e-8, 1e-4)
+    #axes[0].set_yscale('log')
+    #axes[0].annotate('%.2f' % time, xy=(SSC.gamma_grid[np.argmax(N_e)], max(N_e)), xytext=(SSC.gamma_grid[np.argmax(N_e)], max(N_e)*2),
+    #                 arrowprops = dict(arrowstyle = '->'))
 
 
 
@@ -80,19 +82,21 @@ for time in Times:
     #axes[1].set_xscale('log')
     #axes[1].set_yscale('log')
 
-
-    axes[1].plot(boosted_energy, final_SED, lw=2, color='green')
-    axes[1].legend(loc = 0, numpoints = 1., prop = {'size':8.})
-    axes[1].set_xlabel(r'$E\,[eV]$')
-    axes[1].set_ylabel(r'$E^{2} \times {\rm d}F/{\rm d}E\,[erg\,cm^{-2}\,s^{-1}]$')
-    #axes[1].set_ylim(1e-200, 1e200)
-    axes[1].set_xscale('log')
-    axes[1].set_yscale('log')
-    axes[1].set_xlim(1e-3, 1e13)
-    axes[1].set_ylim(1e-35, 1e-2)
-    axes[1].annotate('%.2f' % time, xy=(np.argmax(final_SED), max(final_SED).value), xytext=(np.argmax(final_SED), max(final_SED).value*1e7),
+    #axes.plot(boosted_energy, final_SED, lw=2, color='green')
+    axes.plot(energy, SED, lw=3, color='royalblue', label='Synchrotron + Inverse Compton')
+    axes.legend(loc = 0, numpoints = 1., prop = {'size':8.})
+    axes.set_xlabel(r'$E\,[eV]$')
+    axes.set_ylabel(r'$E^{2} \times {\rm d}F/{\rm d}E\,[erg\,cm^{-2}\,s^{-1}]$')
+    axes.set_ylim(1e-200, 1e200)
+    axes.set_xscale('log')
+    axes.set_yscale('log')
+    axes.set_xlim(1e-10, 1e13)
+    axes.set_ylim(1e-100, 1e-2)
+    annotation_pos = len(boosted_energy)*9/10-10*k
+    axes.annotate('%.2f' % time, xy=(boosted_energy[annotation_pos].value, final_SED[annotation_pos].value),
+                     xytext=(boosted_energy[annotation_pos].value, final_SED[annotation_pos].value*1e7),
                      arrowprops=dict(arrowstyle = '->'))
+    k=k+1
 
-
-fig.savefig('SSC_test_output_final.png')
+fig.savefig('figure2_repro_test.eps')
 plt.show()
