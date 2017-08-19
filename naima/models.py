@@ -10,6 +10,7 @@ from .extern.validator import (validate_scalar, validate_array,
                                validate_physical_type)
 from .radiative import Synchrotron, InverseCompton, PionDecay, Bremsstrahlung
 from .model_utils import memoize
+from scipy.interpolate import interp1d
 
 __all__ = [
     'Synchrotron', 'InverseCompton', 'PionDecay', 'Bremsstrahlung',
@@ -502,6 +503,7 @@ class EblAbsorptionModel(TableModel):
                 table_values2 = taus_table[colname2]
 
                 # Linear interpolation
+
                 factor = (self.redshift-redshift_list[redshift_arg1])/(redshift_list[redshift_arg2]-redshift_list[redshift_arg1])
 
                 table_values = table_values1*(1-factor)+table_values2*factor
