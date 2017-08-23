@@ -77,15 +77,24 @@ class Fitmodel:
         '''
         R = pars[1] * u.cm
         B = pars[2] * u.G
-        emission_region = dict(R=R.value, B=B.value, t_esc=1.5, gamma=100, theta=0, z=0.048)
+
+        if self.intrinsic:
+            theta = 1
+            gamma = 100
+        else:
+            theta = pars[4]
+            gamma = pars[5]
+
+
+        emission_region = dict(R=R.value, B=B.value, t_esc=1.5, gamma=gamma, theta=theta, z = self.z)
 
         norm = 7.0e-4 * u.Unit('erg-1')
         index = pars[0]
 
         injected_spectrum = dict(norm=norm.value, alpha=-index, t_inj = 1.5)
 
-        #gamma_max = pars[3]
-        gamma_max = 2.1e5
+        gamma_max = pars[3]
+        #gamma_max = 2.1e5
         gamma_grid = dict(gamma_min = 2., gamma_max = gamma_max, gamma_bins = 20)
 
         time_grid = dict(time_min = 0, time_max = 3, time_bins = 50)
@@ -137,7 +146,7 @@ class Fitmodel:
 
         if self.intrinsic:
             prior = naima.uniform_prior(pars[0], 1.8, 2.45) \
-                    + naima.uniform_prior(pars[1], 7e15, 8e7) \
+                    + naima.normal_prior(pars[1], 7e15, 8e7) \
                     + naima.uniform_prior(pars[2], 0.1, 2.1) \
 
         else:
@@ -182,7 +191,7 @@ class Fitmodel:
         nparams = len(p0)
 
         if nparams > nwalkers:
-            raise RandomwalkError("The number of walkers should be atleast"
+            raise RandomWalkError("The number of walkers should be atleast"
                                   "greater than the number of parameters!!")
 
         # Numbers for nwalkers, nburn, nrun are only preliminary here
@@ -194,7 +203,7 @@ class Fitmodel:
                                          nwalkers = nwalkers,
                                          nburn = 50,
                                          nrun = 100,
-                                         threads = 4,
+                                         threads = 12,
                                          prefit = False,
                                          data_sed = True,
                                          interactive = True)
