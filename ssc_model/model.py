@@ -3,6 +3,7 @@ from math import pi
 import numpy as np
 from constants import *
 import astropy.units as u
+from astropy.cosmology import WMAP9 as cosmo
 
 class model:
     '''
@@ -34,7 +35,7 @@ class model:
         self.beta = np.sqrt(1-1/self.gamma**2)
         self.theta = emission_region['theta']
         self.z = emission_region['z']
-        self.distance = self.z*c/H*u.Mpc # in Mpc
+        self.distance = cosmo.comoving_distance(self.z) # in Mpc
 
         # time grid attributes definition
         self.time_min = time_grid['time_min']*self.crossing_time

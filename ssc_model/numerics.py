@@ -134,10 +134,10 @@ class numerics:
         '''
         # injected spectrum
 
-        N_e = self.model.constant_injection
+        N_e = self.model.N_e_inj
         # injecton term, to be added each delta_t up to the maximum injection time
         # specified by model.inj_time
-        Q_e = self.model.gaussian_injection
+        Q_e = self.model.powerlaw_injection
         delta_t = self.model.delta_t
 
         # time grid loop

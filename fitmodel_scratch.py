@@ -14,8 +14,7 @@ import argparse
 # 'python fitmodel.py -h' : shows the order of positional args
 # python fitmodel.py -z 0.047 -f data_table_xray.dat data_table_gamma.dat -free 2.3 7.1e15 0.6
 
-__all__ = ['Fitmodel', 'fitter', 'RandomWalkError']
-
+__all__ = ['Fitmodel','fitter', 'RandomWalkError']
 
 class RandomWalkError(Exception):
     """Raised when number of parameters > nwalkers"""
@@ -29,23 +28,23 @@ class Fitmodel:
 
         find the max. likelihood model to fit to data
     '''
-
-    def __init__(self, intrinsic=True):
+    def __init__(self, intrinsic = True):
         """
         Parameters:
         -----------
         intrinsic : bool
                     whether the given data files represent the intrinsic
                     or the observed spectral points (bt default intrinsic)
-        """
-        parser = argparse.ArgumentParser(
-            description='find the max. likelihood model to fit to data')
-        parser.add_argument('-z', metavar='--REDSHIFT', type=float)
-        parser.add_argument('-f', metavar='--DATA-FILES', type=str, nargs='+')
-        parser.add_argument('-free', metavar='--FREE_PARAMS', nargs='+',
-                            type=float, help="index R(cm) B(G) "
-                                             "gamma-max theta(deg) "
-                                             "bulk-lorentz-fac...")
+         """
+
+
+        parser = argparse.ArgumentParser(description = 'find the max. likelihood model to fit to data')
+        parser.add_argument('-z', metavar ='--REDSHIFT', type=float)
+        parser.add_argument('-f', metavar ='--DATA-FILES', type=str, nargs='+')
+        parser.add_argument('-free', metavar ='--FREE_PARAMS', type=float, nargs='+', help='index R(cm) '
+                                                                                           'B(G) gamma-max theta(deg) '
+                                                                                           'bulk-lorentz fac ...')
+
         args = parser.parse_args()
 
         self.intrinsic = intrinsic
@@ -54,6 +53,7 @@ class Fitmodel:
         self.p0 = args.free
         print('Provided {} astropy table(s): {}'.format(len(self.files), self.files))
         self.e_npoints = 0
+
         for file in self.files:
             f = Table.read(file, format='ascii')
             n = len(f['energy'])
@@ -64,35 +64,34 @@ class Fitmodel:
         '''
         The model function will be called during fitting to compare
         with obsrvations.
-
         Parameters:
         ------------
         pars: list
-              list of free parameters of the model
+        list of free parameters of the model
         data: astropy_table
-              observational data. Multiple tables can also be
-              passed to 'data'
-
+        observational data. Multiple tables can also be
+        passed to 'data'
         Returns:
         ---------
         Flux model to compare with observations.
         '''
         R = pars[1] * u.cm
         B = pars[2] * u.G
-        emission_region = dict(R=R.value, B=B.value, t_esc=1.5, gamma = 100, theta = 0, z = 0.048)
+        emission_region = dict(R=R.value, B=B.value, t_esc=1.5, gamma=100, theta=0, z=0.048)
 
         norm = 7.0e-4 * u.Unit('erg-1')
         index = pars[0]
-        injected_spectrum = dict(norm=norm.value, alpha=-index, t_inj=1.5)
 
-        # gamma_max = pars[3]
+        injected_spectrum = dict(norm=norm.value, alpha=-index, t_inj = 1.5)
+
+        #gamma_max = pars[3]
         gamma_max = 2.1e5
-        gamma_grid = dict(gamma_min=2., gamma_max=gamma_max, gamma_bins=20)
+        gamma_grid = dict(gamma_min = 2., gamma_max = gamma_max, gamma_bins = 20)
 
-        time_grid = dict(time_min=0., time_max=3., time_bins=50)
-
+        time_grid = dict(time_min = 0, time_max = 3, time_bins = 50)
         # with the above parameter set, we now obtain a particle distibution
         # from numerics class
+
         SSC = mod(time_grid, gamma_grid, emission_region, injected_spectrum)
         num = numerics(SSC)
         N_e = num.evolve()
@@ -103,33 +102,19 @@ class Fitmodel:
         IC = num.inverse_compton(N_e)
         distance = SSC.distance
 
-        # create the flux model to be given as input to run_sampler
+        # create the flux model to be given as a run_sampler
+        energy = np.logspace(-7, 15, self.e_npoints)*u.eV
+        ic_flux = IC.sed(energy, distance)
+        syn_flux = SYN.sed(energy, distance)
+
         if self.intrinsic:
-            energy = np.logspace(-7, 15, self.e_npoints) * u.eV
-            ic_flux = IC.sed(energy, distance)
-            syn_flux = SYN.sed(energy, distance)
             model_flux = ic_flux + syn_flux
+
         else:
-            beta = np.sqrt(1. - 1. / (pars[5] ** 2))
-            doppler = (1 + self.z) * \
-                      (1. / (pars[5] * (1. - beta * np.cos(pars[4]))))
-            energy = (np.logspace(-7, 15, self.e_npoints) * u.eV) * doppler
-            model_flux = (IC.sed(energy, distance) +
-                          SYN.sed(energy, distance)) * (doppler ** 3)
+            energy, model_flux_no_absorption = num.doppler(energy, ic_flux + syn_flux)
+            model_flux = num.ebl(energy, model_flux_no_absorption)
+
         return model_flux
-
-    def ebl(self):
-        '''
-        This function is not used at present.
-        Only makes sense to use after implementing Doopler boosting.
-
-        Returns:
-        --------
-        opacity values which can be multiplied to a flux model
-        '''
-        z = self.z
-        opacity = naima.models.EblAbsorptionModel(redshift=z)
-        return opacity
 
     def prior_func(self, pars):
         '''
@@ -152,23 +137,17 @@ class Fitmodel:
 
         if self.intrinsic:
             prior = naima.uniform_prior(pars[0], 1.8, 2.45) \
-                    + naima.normal_prior(pars[1], 7e15, 8e7) \
+                    + naima.uniform_prior(pars[1], 7e15, 8e7) \
                     + naima.uniform_prior(pars[2], 0.1, 2.1) \
- \
-                # if self.intrinsic:
-        # prior = naima.normal_prior(pars[0], 2.3, 0.002) \
-        #            + naima.normal_prior(pars[1], 7e15, 6.2e7) \
-        #            + naima.uniform_prior(pars[2], 0.1, 2.1) \
-        #            #+ naima.normal_prior(pars[3], 2.2e5, 0.9e2) \
-
 
         else:
-            prior = naima.uniform_prior(pars[0], 1.8, 2.5) \
-                    + naima.uniform_prior(pars[1], 7e15, 8e15) \
+            prior = naima.uniform_prior(pars[0], 1.8, 2.45) \
+                    + naima.uniform_prior(pars[1], 7e15, 8e7) \
                     + naima.uniform_prior(pars[2], 0.9, 2.1) \
                     + naima.uniform_prior(pars[3], 1.5e5, 2.5e5) \
                     + naima.uniform_prior(pars[4], 1, 45) \
-                    + naima.uniform_prior(pars[5], 1, 80)
+                    + naima.uniform_prior(pars[5], 1, 80) \
+
         return prior
 
     def fitter(self, p0, labels, datatable):
@@ -177,49 +156,48 @@ class Fitmodel:
 
         Parameters:
         ------------
-        p0: list
-            free parameters; 1st guess (compact using InteractiveModelFitter)
-        labels: list
-                names of the free parameters
-        data_table: astropy Table
-                    list of data tables for fitting
 
+        p0: list
+            free parameters; 1st guess (compact using InteractiveModeFitter)
+        labels: list
+            names of the free parameters
+        datatable:  astropy Table
+                    list of data tables for fitting
         Results of the fit (an astropy table with best param estimate and
         uncertainties & the sed fit) are stored inside 'results_ssc_fit'
         '''
 
-        print("Executing the fit...")
+        print("Executing the fit ...")
 
-        # An interactive window helps to adjust the starting point of sampling
-        # before calling run_sampler.
-        imf = naima.InteractiveModelFitter(self.model_func,
-                                           p0, sed=True,
-                                           e_range=[1e-3 * u.eV, 1e15 * u.eV],
-                                           e_npoints=self.e_npoints,
-                                           labels=labels)
+        # An interactive Window helps to adjust the starting point of sampling
+        # before calling run_sampler
+        imf = naima.InteractiveModelFitter(self.model_func, p0, sed = True,
+                                           e_range=[1e-3*u.eV, 1e15*u.eV],
+                                           e_npoints = self.e_npoints,
+                                           labels = labels)
 
         p0 = imf.pars
 
         nwalkers = 100
         nparams = len(p0)
+
         if nparams > nwalkers:
-            raise RandomWalkError("The number of walkers should be atleast"
+            raise RandomwalkError("The number of walkers should be atleast"
                                   "greater than the number of parameters!!")
 
         # Numbers for nwalkers, nburn, nrun are only preliminary here
-        # to achieve fast computation.
+        # to achieve fast computation
         sampler, pos = naima.run_sampler(data_table=datatable,
-                                         p0=p0,
-                                         labels=labels,
-                                         model=self.model_func,
-                                         prior=self.prior_func,
-                                         nwalkers=nwalkers,
-                                         nburn=50,
-                                         nrun=100,
-                                         threads=12,
-                                         prefit=False,
-                                         data_sed=True,
-                                         interactive=True)
+                                         p0 = p0,
+                                         model = self.model_func,
+                                         prior = self.prior_func,
+                                         nwalkers = nwalkers,
+                                         nburn = 50,
+                                         nrun = 100,
+                                         threads = 4,
+                                         prefit = False,
+                                         data_sed = True,
+                                         interactive = True)
 
         naima.save_results_table('./results_ssc_fit/data_fit_table', sampler)
         fit_sed = naima.plot_fit(sampler, n_samples=50, e_range=[
@@ -234,27 +212,35 @@ class Fitmodel:
         corner_plt = naima.plot_corner(sampler, show_ML=True)
         corner_plt.savefig("./results_ssc_fit/corner_plots.png")
 
+
     def main(self):
         '''
         Main function
         '''
         readdata = []
         for file in self.files:
-            f = Table.read(file, format='ascii')
+            f = Table.read(file, format=('ascii'))
             readdata.append(f)
 
         p_init = self.p0
 
         if self.intrinsic:
-            # labels = ['index','R(cm)', 'B(G)', 'gamma_max']
-            labels = ['index', 'R(cm)', 'B(G)']
+            labels = ['index','R(cm)', 'B(G)', 'gamma_max']
+            #labels = ['index', 'R(cm)', 'B(G)']
+
         else:
-            labels = ['index', 'R(cm)', 'B(G)', 'gamma_max', \
+            labels = ['index', 'R(cm)', 'B(G)', 'gamma_max',
                       'theta(deg)', 'lorentz']
 
         self.fitter(p_init, labels, readdata)
 
-
 if __name__ == '__main__':
-    fitter_obj = Fitmodel(intrinsic=True)
+    fitter_obj = Fitmodel(intrinsic = True)
     fitter_obj.main()
+
+
+
+
+
+
+
