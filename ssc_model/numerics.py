@@ -179,7 +179,7 @@ class numerics:
 
     def absorption(self, N_e, U_rad=False):
         '''
-            Calculating absorption coefficient k from Eq.(15) of Reference
+            Calculating absorption coefficient k table model from Eq.(15) of Reference
 
             Parameters
             ----------
@@ -209,12 +209,16 @@ class numerics:
         p = np.sqrt(gamma_grid ** 2 - 1)
 
         def funcderiv(energy, gamma):
-            ''''''
+            '''
+            Function inside the derivative depending on the photon energy
+            and the Lorentz factor of the electron
+            '''
             p = sqrt(gamma ** 2 - 1)
             B = self.model.B*u.G
             Syn = self.SingleSynchrotron(gamma, B, energy)
             return gamma * p * Syn.value
 
+        # Build the absorption coefficient array depending on photon energies
         for eps in energy:
             deriv_list = []
             for gamma in gamma_grid:
@@ -232,12 +236,23 @@ class numerics:
 
         k_final = -np.array(k_abs)
 
+        # Use table_model to be flexible in relevant photon energies
         k_final_table = naima.models.TableModel(energy,
                                                 k_final,
                                                 amplitude=1)
         return k_final_table
 
     def absorption_factor(self, k):
+        '''
+        Absorption factor for synchrotron-self absorption as float
+        value in units of cm according to Eq.(14).
+
+        Parameters
+        ----------
+        k : array
+            unitless absorption coefficient with value according
+            to the unit of 1/cm
+        '''
         for i in range(len(k)):
             if k[i]<=1e-300:
                 k[i]=1e-300
@@ -264,6 +279,7 @@ class numerics:
 
 
     def inverse_compton(self,N_e, Syn, abs_fac, U_rad=False):
+
         if U_rad:
             energy_grid = self.model.gamma_grid_midpts*E_rest
         else:
