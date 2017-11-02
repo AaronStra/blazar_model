@@ -63,7 +63,7 @@ class Fitmodel:
     def model_func(self, pars, data):
         '''
         The model function will be called during fitting to compare
-        with obsrvations.
+        with observations.
         Parameters:
         ------------
         pars: list
@@ -79,8 +79,8 @@ class Fitmodel:
         B = pars[2] * u.G
 
         if self.intrinsic:
-            theta = 1
-            gamma = 100
+            theta = 1.
+            gamma = 10
         else:
             theta = pars[4]
             gamma = pars[5]
@@ -88,16 +88,16 @@ class Fitmodel:
 
         emission_region = dict(R=R.value, B=B.value, t_esc=1.5, gamma=gamma, theta=theta, z = self.z)
 
-        norm = 7.0e-4 * u.Unit('erg-1')
+        norm = 10 * u.Unit('erg-1')
         index = pars[0]
 
-        injected_spectrum = dict(norm=norm.value, alpha=-index, t_inj = 1.5)
+        injected_spectrum = dict(norm=norm.value, alpha1=-index, t_inj = 1.5)
 
         gamma_max = pars[3]
-        #gamma_max = 2.1e5
-        gamma_grid = dict(gamma_min = 2., gamma_max = gamma_max, gamma_bins = 20)
+        #gamma_max = 1e7
+        gamma_grid = dict(gamma_min = 10, gamma_max = gamma_max, gamma_bins = 50)
 
-        time_grid = dict(time_min = 0, time_max = 3, time_bins = 50)
+        time_grid = dict(time_min = 0., time_max = 3, time_bins = 50)
         # with the above parameter set, we now obtain a particle distibution
         # from numerics class
 
@@ -107,7 +107,7 @@ class Fitmodel:
 
         # Obtain the Syn and IC instances by feeding in the particle
         # distribution model
-        SYN = num.synchrotron(N_e)
+        SYN = num.synchrotron(N_e, SSC.energy_grid)
         IC = num.inverse_compton(N_e)
         distance = SSC.distance
 
@@ -145,17 +145,18 @@ class Fitmodel:
         # The order of the command line args is very imp
 
         if self.intrinsic:
-            prior = naima.uniform_prior(pars[0], 1.8, 2.45) \
-                    + naima.normal_prior(pars[1], 7e15, 8e7) \
-                    + naima.uniform_prior(pars[2], 0.1, 2.1) \
+            prior = naima.uniform_prior(pars[0], 1.7, 1.9) \
+                    + naima.normal_prior(pars[1], 1e15, 1e16) \
+                    + naima.uniform_prior(pars[2], 0.01, 2.1) \
+                    + naima.uniform_prior(pars[3], 1.5e5, 2.5e5)
 
         else:
-            prior = naima.uniform_prior(pars[0], 1.8, 2.45) \
-                    + naima.uniform_prior(pars[1], 7e15, 8e7) \
-                    + naima.uniform_prior(pars[2], 0.9, 2.1) \
-                    + naima.uniform_prior(pars[3], 1.5e5, 2.5e5) \
-                    + naima.uniform_prior(pars[4], 1, 45) \
-                    + naima.uniform_prior(pars[5], 1, 80) \
+            prior = naima.uniform_prior(pars[0], 1.7, 1.9) \
+                    + naima.normal_prior(pars[1], 1e15, 1e16) \
+                    + naima.uniform_prior(pars[2], 0.01, 2.1) \
+                    + naima.uniform_prior(pars[3], 1.5e6, 2.5e9) \
+                    + naima.uniform_prior(pars[4], 0, 20) \
+                    + naima.uniform_prior(pars[5], 5, 20) \
 
         return prior
 
@@ -167,10 +168,10 @@ class Fitmodel:
         ------------
 
         p0: list
-            free parameters; 1st guess (compact using InteractiveModeFitter)
+            free parameters; 1st guess (compact using InteractiveModelFitter)
         labels: list
             names of the free parameters
-        datatable:  astropy Table
+        data_table:  astropy Table
                     list of data tables for fitting
         Results of the fit (an astropy table with best param estimate and
         uncertainties & the sed fit) are stored inside 'results_ssc_fit'
@@ -180,12 +181,12 @@ class Fitmodel:
 
         # An interactive Window helps to adjust the starting point of sampling
         # before calling run_sampler
-        imf = naima.InteractiveModelFitter(self.model_func, p0, sed = True,
-                                           e_range=[1e-3*u.eV, 1e15*u.eV],
-                                           e_npoints = self.e_npoints,
-                                           labels = labels)
+        #imf = naima.InteractiveModelFitter(self.model_func, p0, sed = True,
+        #                                   e_range=[1e-3*u.eV, 1e15*u.eV],
+        #                                   e_npoints = self.e_npoints,
+        #                                   labels = labels)
 
-        p0 = imf.pars
+        #p0 = imf.pars
 
         nwalkers = 100
         nparams = len(p0)
@@ -197,13 +198,15 @@ class Fitmodel:
         # Numbers for nwalkers, nburn, nrun are only preliminary here
         # to achieve fast computation
         sampler, pos = naima.run_sampler(data_table=datatable,
+                                         labels = labels,
                                          p0 = p0,
                                          model = self.model_func,
                                          prior = self.prior_func,
                                          nwalkers = nwalkers,
+
                                          nburn = 50,
                                          nrun = 100,
-                                         threads = 12,
+                                         threads = 1,
                                          prefit = False,
                                          data_sed = True,
                                          interactive = True)
@@ -228,7 +231,7 @@ class Fitmodel:
         '''
         readdata = []
         for file in self.files:
-            f = Table.read(file, format=('ascii'))
+            f = Table.read(file, format='ascii')
             readdata.append(f)
 
         p_init = self.p0
@@ -244,7 +247,7 @@ class Fitmodel:
         self.fitter(p_init, labels, readdata)
 
 if __name__ == '__main__':
-    fitter_obj = Fitmodel(intrinsic = True)
+    fitter_obj = Fitmodel(intrinsic = False)
     fitter_obj.main()
 
 

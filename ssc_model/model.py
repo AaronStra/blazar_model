@@ -4,6 +4,7 @@ import numpy as np
 from constants import *
 import astropy.units as u
 from astropy.cosmology import WMAP9 as cosmo
+import naima
 
 class model:
     '''
@@ -27,10 +28,11 @@ class model:
 
         # emission regions attributes definitions
         self.R = emission_region['R'] # in cm
+        self.volume=4 / 3 * pi * self.R ** 3
         self.crossing_time = self.R/c
         self.B = emission_region['B'] # in Gauss
-        self.U_B = self.B/(8.*pi) # magnetic field density
         self.t_esc = emission_region['t_esc']*self.crossing_time
+        self.U_B = self.B**2 / (8. * pi)  # magnetic field density
         self.gamma = emission_region['gamma']
         self.beta = np.sqrt(1-1/self.gamma**2)
         self.theta = emission_region['theta']
@@ -51,8 +53,9 @@ class model:
         # following Eq.(5) of the Reference, LorentzFactor grid has to be logspaced
         # we loop over range(-1,N+2) include \gamma_{-1} and \gamma{N+1}
         gamma_grid = []
+        self.gamma_min_calc = self.gamma_max ** (1 / self.gamma_bins) * self.gamma_min ** ((self.gamma_bins - 1) / self.gamma_bins) #(due to dividing by p=0 if gamma=1)
         for j in range(-1, self.gamma_bins + 2):
-            gamma_grid.append(self.gamma_min*(self.gamma_max/self.gamma_min)**((j-1)/(self.gamma_bins-1)))
+            gamma_grid.append(self.gamma_min_calc*(self.gamma_max/self.gamma_min_calc)**((j-1)/(self.gamma_bins-1)))
         # gamma_grid_ext will be the grid that contains \gamma_{-1} and \gamma{N+1}
         self.gamma_grid_ext = np.array(gamma_grid)
         # gamma_grid will be the grid with elements from \gamma_{0} to \gamma_{N}
@@ -61,13 +64,30 @@ class model:
         self.energy_grid = self.gamma_grid*E_rest
 
         # let's create an array for the density of radiation
-        self.U_rad = np.zeros(len(self.gamma_grid), float)
-
+        self.U_rad = 0
         # injected spectrum attributes
-        self.inj_spectr_norm = injected_spectrum['norm']
-        self.inj_spectr_index = injected_spectrum['alpha']
-        self.inj_time = injected_spectrum['t_inj']*self.crossing_time # injection time
 
+
+        self.inj_spectr_type= injected_spectrum['type']
+        if self.inj_spectr_type=='constant':
+            self.inj_spectr_norm = injected_spectrum['norm']
+
+        elif self.inj_spectr_type=='power-law':
+            self.inj_spectr_norm = injected_spectrum['norm']
+            self.inj_spectr_index = injected_spectrum['alpha']
+
+        elif self.inj_spectr_type=='broken power-law':
+            self.inj_spectr_norm = injected_spectrum['norm']
+            self.inj_spectr_index_1 = injected_spectrum['alpha1']
+            self.inj_spectr_index_2 = injected_spectrum['alpha2']
+            self.e_break = injected_spectrum['e_break']
+
+        elif self.inj_spectr_type=='gaussian':
+            self.inj_spectr_norm = injected_spectrum['norm']
+            self.inj_spectr_mu = injected_spectrum['mu']
+            self.inj_spectr_sig = injected_spectrum['sig']
+
+        self.inj_time = injected_spectrum['t_inj']*self.crossing_time # injection time
 
     @property
     def gamma_grid_midpts(self):
@@ -79,6 +99,15 @@ class model:
         '''
         return (self.gamma_grid_ext[1:]*self.gamma_grid_ext[:-1])**0.5
 
+    @property
+    def gamma_grid_midpts_inj(self):
+        '''
+        will return us the Lorentz factor grid midpoints \gamma_{j \pm 1/2}
+        it's calculated on gamma_grid_exts o we have \gamma_{-1/2} ... \gamma_{N+1/2}
+        with the trick of using the extended grid (\gamma_{-1} and \gamma{N+1}) now
+        the grid of delta_gamma  has the same dimension of the (\gamma_{0} and \gamma{N}) grid.
+        '''
+        return (self.gamma_grid_ext_inj[1:] * self.gamma_grid_ext_inj[:-1]) ** 0.5
 
     @property
     def delta_gamma(self):
@@ -105,7 +134,13 @@ class model:
         '''
         will initialize an array for costant injection
         '''
-        return np.array([self.inj_spectr_norm/1e5 for gamma in self.gamma_grid])
+        return np.array([self.inj_spectr_norm*0 for gamma in self.gamma_grid])
+
+    def zero_injection(self):
+        '''
+        will initialize an array for costant injection
+        '''
+        return np.array([0 for gamma in self.gamma_grid])
 
     @property
     def powerlaw_injection(self):
@@ -114,16 +149,24 @@ class model:
         '''
         return self.N_e_inj
 
+
+    @property
+    def broken_powerlaw_injection(self):
+        '''
+        will initialize an array for broken-power-law injection
+        '''
+        BPL=naima.models.BrokenPowerLaw(self.inj_spectr_norm,self.energy_grid[0]*u.eV,10**self.e_break*u.eV, self.inj_spectr_index_1, self.inj_spectr_index_2)
+        return BPL(self.energy_grid*u.eV)
+
     @property
     def gaussian_injection(self):
         '''
         will initialize an array for gaussian injection
         an extra gamma_grid is needed
         '''
-        mu = 1e5
-        sigma = mu/1000
-        l = 1e-3
-        A = l*self.R*m_e*c**3/(np.sqrt(2*pi)*sigma*sigma_T)
-        A = self.inj_spectr_norm
 
-        return np.array([A*np.exp(-(gamma-mu)**2/(2*sigma**2)) for gamma in self.gamma_grid])
+        mu = self.inj_spectr_mu
+        sigma = self.inj_spectr_sig
+        l = self.inj_spectr_norm
+
+        return np.array([l*np.exp(-(gamma-mu)**2/(2*sigma**2)) for gamma in self.gamma_grid])

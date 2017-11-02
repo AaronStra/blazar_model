@@ -416,9 +416,17 @@ class TableModel(object):
         loge = np.log10(self._energy.to('eV').value)
         try:
             self.unit = self._values.unit
+            for i in range(0,len(self._values.value)):
+                if self._values.value[i] == 0:
+                   self._values.value[i] = 1e-322
+
             logy = np.log10(self._values.value)
         except AttributeError:
             self.unit = u.Unit('')
+            for i in range(0,len(self._values)):
+                if self._values[i] == 0:
+                   self._values[i] = 1e-322
+
             logy = np.log10(self._values)
 
         self._interplogy = interp1d(
@@ -479,34 +487,33 @@ class EblAbsorptionModel(TableModel):
             filename = get_pkg_data_filename(
                 os.path.join('data', 'tau_dominguez11.npz'))
             taus_table = np.load(filename)['arr_0']
+
             redshift_list = np.arange(0.01, 4, 0.01)
             energy = taus_table['energy'] * u.TeV
             if self.redshift >= 0.01:
-                # Redshift intervall for interpolation:
-
-                redshift_arg1 = (np.abs(redshift_list - self.redshift)).argmin()
-
-                if redshift_list[redshift_arg1] <= self.redshift:
-                        redshift_arg2 = redshift_arg1 + 1
+                if self.redshift in redshift_list:
+                    colname = 'col%s' % (
+                        2 + (np.abs(redshift_list - self.redshift)).argmin())
+                    table_values = taus_table[colname]
                 else:
-                        redshift_arg2 = redshift_arg1
-                        redshift_arg1 = redshift_arg1 - 1
+                    # Redshift intervall for interpolation:
+                    redshift_arg1 = (np.abs(redshift_list - self.redshift)).argmin()
+                    if redshift_list[redshift_arg1] <= self.redshift:
+                            redshift_arg2 = redshift_arg1 + 1
+                    else:
+                            redshift_arg2 = redshift_arg1
+                            redshift_arg1 = redshift_arg1 - 1
+                    colname1 = 'col%s' % (
+                        2 + redshift_arg1)
+                    colname2 = 'col%s' % (
+                        2 + redshift_arg2)
+                    table_values1 = taus_table[colname1]
+                    table_values2 = taus_table[colname2]
 
+                    # Linear interpolation
 
-                colname1 = 'col%s' % (
-                    2 + redshift_arg1)
-
-                colname2 = 'col%s' % (
-                    2 + redshift_arg2)
-
-                table_values1 = taus_table[colname1]
-                table_values2 = taus_table[colname2]
-
-                # Linear interpolation
-
-                factor = (self.redshift-redshift_list[redshift_arg1])/(redshift_list[redshift_arg2]-redshift_list[redshift_arg1])
-
-                table_values = table_values1*(1-factor)+table_values2*factor
+                    factor = (self.redshift-redshift_list[redshift_arg1])/(redshift_list[redshift_arg2]-redshift_list[redshift_arg1])
+                    table_values = table_values1*(1-factor)+table_values2*factor
 
                 # Set maximum value of the log(Tau) to 150, as it is high
                 # enough.  This solves later overflow problems.
@@ -515,6 +522,7 @@ class EblAbsorptionModel(TableModel):
             elif self.redshift < 0.01:
                 taus = 10**np.zeros(len(taus_table[
                     'energy'])) * u.dimensionless_unscaled
+
         else:
             raise ValueError('Model should be one of: ["Dominguez"]')
 
@@ -526,8 +534,9 @@ class EblAbsorptionModel(TableModel):
         for i in range(0, len(e)):
             if e[i].to('GeV').value < 1.:
                 taus[i] = 0.
-            elif e[i].to('TeV').value > 1000.:
+            elif e[i].to('TeV').value > 100.:
                 taus[i] = np.log10(6000.)
             else:
                 taus[i] = np.log10(self(e[i]))
+
         return np.exp(-taus)
