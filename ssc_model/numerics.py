@@ -393,11 +393,14 @@ class numerics:
         and will update the model.U_rad parameter.
         Options only_synchrotron_cooling is for test
         '''
-        # injected spectrum
+
         self.N_e_grid = []
         self.cooling=[]
         self.U_rad_grid=[]
+
         delta_t = self.model.delta_t
+
+        # injected spectrum
         if self.model.inj_spectr_type=='power-law':
             Q_e = self.model.powerlaw_injection
             N_e = self.model.powerlaw_injection*delta_t

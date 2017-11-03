@@ -67,7 +67,7 @@ class model:
         self.U_rad = 0
         # injected spectrum attributes
 
-
+        # Distinction between the needed parameters depending on the injection type
         self.inj_spectr_type= injected_spectrum['type']
         if self.inj_spectr_type=='constant':
             self.inj_spectr_norm = injected_spectrum['norm']
