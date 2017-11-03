@@ -21,11 +21,11 @@ f = Table.read(file.read(), format='ascii')
 
 
 
-time_grid = dict(time_min = 0, time_max = 0.02, time_bins = 2)
-gamma_grid = dict(gamma_min =1, gamma_max = 1e5, gamma_bins =10)
+time_grid = dict(time_min = 0, time_max = 1, time_bins = 10)
+gamma_grid = dict(gamma_min =1, gamma_max = 1e5, gamma_bins =200)
 #gamma_grid = dict(gamma_min =2, gamma_max = 1e5, gamma_bins =200)
 emission_region = dict(R = 1e16, B = 1, t_esc = 1.5, gamma = 10, theta = 0, z = 0.047)
-injected_spectrum = dict(type = 'power-law', norm = 1e-3, alpha=-1.7, t_inj = 1)
+injected_spectrum = dict(type = 'power-law', norm = 4e0, alpha=-1.7, t_inj = 1)
 #injected_spectrum = dict(type='power-law', norm=1e3, alpha=-1.7, t_inj=0.1)
 
 start = timeit.default_timer()

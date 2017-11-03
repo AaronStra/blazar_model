@@ -179,17 +179,17 @@ class numerics:
 
     def absorption(self, N_e, U_rad=False):
         '''
-            Calculating absorption coefficient k table model from Eq.(15) of Reference
+        Calculating absorption coefficient k table model from Eq.(15) of Reference
 
-            Parameters
-            ----------
-            N_e : array
-                Particle distribution as float values corresponding to
-                units of 1/cm3
-            U_rad : boolean, optional
-                Dependence on the purpose of calculation for the final
-                absorption in the SED (False) or the calculation of U_rad (True).
-            '''
+        Parameters
+        ----------
+        N_e : array
+            Particle distribution as float values corresponding to
+            units of 1/cm3. Equals the number of electrons per Lorentz factor.
+        U_rad : boolean, optional
+            Dependence on the purpose of calculation for the final
+            absorption in the SED (False) or the calculation of U_rad (True).
+        '''
         if U_rad:
             gamma_grid=self.model.gamma_grid_midpts
             e_max = (3 * m_e * c ** 2 / (4 * gamma_grid[0]) * u.erg).to('eV').value
@@ -253,6 +253,8 @@ class numerics:
             unitless absorption coefficient with value according
             to the unit of 1/cm
         '''
+
+        # avoid division by zero:
         for i in range(len(k)):
             if k[i]<=1e-300:
                 k[i]=1e-300
@@ -262,7 +264,9 @@ class numerics:
 
     def synchrotron(self, N_e, U_rad = False):
         # we plug now the obtained electron distribution in naima TableModel
-        # remultiply by Volume and maximum time of evolution to get N_e differential in Energy
+        # remultiply by Volume and devide by the electrons rest mass energy to get N_e differential in Energy
+
+        # the used energy_grid depends on if the calculation is for U_rad or the final spectrum
         if U_rad:
             energy_grid = self.model.gamma_grid_midpts*E_rest
         else:
@@ -305,7 +309,24 @@ class numerics:
         return IC
 
     def radiation_field_table(self,N_e, U_rad=False, absorption=True):
+        '''
+        Calculation of the specific intensity inside the emission region.
+        It consists of the Synchrotron and the IC radiation.
+        Parameters
+        ----------
+        N_e : array
+            Particle distribution as float values corresponding to
+            units of 1/cm3. Equals the number of electrons per Lorentz factor.
 
+        U_rad : boolean, optional
+            Dependence on the purpose of calculation for the final
+            absorption in the SED (False) or the calculation of U_rad (True).
+
+        absorption : boolean, optional
+            Only for test purposes. Turn it off to safe time.
+            (For example adding the calculation of the absorption leads to
+            the need of four times the computational time of a run without at 200 gamma_bins)
+        '''
 
         transversion=1/(4*np.pi*self.model.volume*self.energy.to('erg'))
 
