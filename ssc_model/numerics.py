@@ -22,35 +22,43 @@ class numerics:
         self.energy = np.logspace(-13, 15, 200) * u.eV
 
 
-    def ChaCoo_tridiag_matrix(self,N_e):
+    def ChaCoo_tridiag_matrix(self,N_e,U_rad_calculation=True):
         '''
         Implementing tridiagonal matrix of Eq.(9) of Reference
         '''
         # the dimension of our problem is
         N = len(self.model.delta_gamma)
         ChaCoo_matrix = np.zeros((N,N), float)
+        if U_rad_calculation:
 
-        # Precalculate quantities for U_rad
-        # Calculate particle distribution at gamma_grid_midpts
-        N_e_table = naima.models.TableModel(self.model.gamma_grid * u.eV,
-                                                   N_e,
-                                                   amplitude=1)
-        N_e_midpts=N_e_table(self.model.gamma_grid_midpts*u.eV)
+            # Precalculate quantities for U_rad
+            # Calculate particle distribution at gamma_grid_midpts
+            N_e_table = naima.models.TableModel(self.model.gamma_grid * u.eV,
+                                                       N_e,
+                                                       amplitude=1)
+            N_e_midpts=N_e_table(self.model.gamma_grid_midpts*u.eV)
 
-        # Setting first and last value equal to the original one
-        # to avoid additional zeros at the end and the beginning
-        # of the array due to the tablemodelling.
-        N_e_midpts[0],N_e_midpts[-1]=N_e[0],N_e[-1]
+            # Setting first and last value equal to the original one
+            # to avoid additional zeros at the end and the beginning
+            # of the array due to the tablemodelling.
+            N_e_midpts[0],N_e_midpts[-1]=N_e[0],N_e[-1]
 
-        # Calculate specific intensity of the radiation based on N_e_midpts
-        I_table=self.radiation_field_table(N_e_midpts,U_rad=True,absorption=True)
+            # Calculate specific intensity of the radiation based on N_e_midpts
+            I_table=self.radiation_field_table(N_e_midpts,U_rad=True,absorption=True)
 
-        # Build U_rad_array
-        U_rad = []
-        for gamma in self.model.gamma_grid_midpts:
-            U_rad_element = self.u_rad_calc(gamma, I_table).value
-            U_rad.append(U_rad_element)
-        U_rad = np.array(U_rad)
+            # Build U_rad_array
+            U_rad = []
+            for gamma in self.model.gamma_grid_midpts:
+                U_rad_element = self.u_rad_calc(gamma, I_table).value
+                U_rad.append(U_rad_element)
+            U_rad = np.array(U_rad)
+
+        else:
+            U_rad = []
+            for gamma in self.model.gamma_grid_midpts:
+                U_rad_element=self.model.U_rad
+                U_rad.append(U_rad_element)
+            U_rad = np.array(U_rad)
 
         # Calculate cool_rate for current particle distribution N_e
         cooling=self.cool_rate(self.model.gamma_grid_midpts, U_rad)
