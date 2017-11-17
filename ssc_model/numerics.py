@@ -22,7 +22,7 @@ class numerics:
         self.energy = np.logspace(-13, 15, 200) * u.eV
 
 
-    def ChaCoo_tridiag_matrix(self,N_e,U_rad_calculation=True):
+    def ChaCoo_tridiag_matrix(self,N_e,U_rad_calculation=False):
         '''
         Implementing tridiagonal matrix of Eq.(9) of Reference
         '''
