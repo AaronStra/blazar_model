@@ -1,7 +1,7 @@
 from __future__ import division
 from math import pi, sqrt, exp, log
 import numpy as np
-from constants import *
+from .constants import *
 import astropy.units as u
 import astropy.constants as const
 import naima
@@ -22,7 +22,7 @@ class numerics:
         self.energy = np.logspace(-13, 15, 200) * u.eV
 
 
-    def ChaCoo_tridiag_matrix(self,N_e,U_rad_calculation=False):
+    def ChaCoo_tridiag_matrix(self,N_e,U_rad_calculation=True):
         '''
         Implementing tridiagonal matrix of Eq.(9) of Reference
         '''
@@ -445,14 +445,7 @@ class numerics:
             N_e = N_e_tmp
             self.N_e_grid.append(N_e)
             # update the time past injection
-            print 't after injection: ', time_past_injection/self.model.crossing_time, ' crossing time'
+            print( 't after injection: ', time_past_injection/self.model.crossing_time, ' crossing time')
             time_past_injection += delta_t
 
         return N_e
-
-
-
-
-
-
-

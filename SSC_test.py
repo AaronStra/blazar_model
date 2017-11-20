@@ -82,13 +82,13 @@ else:
     final_SED = num.ebl(boosted_energy, boosted_SED)
 
     stop = timeit.default_timer()
-    print 'Computational time: '
-    print stop - start, ' s'
+    print('Computational time: ')
+    print(stop - start, ' s')
 
     axes[1].plot(boosted_energy, final_SED)
     axes[1].legend(loc = 0, numpoints = 1.)
-    axes[1].set_xlabel(r'E [eV]')
-    axes[1].set_ylabel(r'$E\times\frac{\mathrm{d}F}{\mathrm{d}E}')
+    axes[1].set_xlabel('E [eV]')
+    axes[1].set_ylabel(r'E$^2$ dF/dE')
     #axes[1].set_ylim(-20, 7)
     #axes[1].set_xlim(-3, 14)
     axes[1].set_xscale('log')
